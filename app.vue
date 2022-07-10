@@ -1,14 +1,30 @@
 <template>
   <main class="main">
     <pre>Infatuation take-home, 2022-07-08</pre>
-    <!--<button @click="() => refresh()">Fetch CPU</button>
+    <!--
+    <button @click="() => refresh()">Fetch CPU</button>
     <pre v-if="error">Error loading CPU Data</pre>
     <pre>{{ JSON.stringify(latestData, null, 2) }}</pre>
     -->
-    <button @click="toggleMonitoring">{{ isMonitoring ? "Turn off monitoring" : "Turn on monitoring"}}</button>
-    <button @click="toggleRenderAnimation()">{{ isRenderingFast ? "Render slower" : "Render continuously" }}</button>
-    <h3>CPU Load (1 min avg)</h3>
-    <div id="cpuChart"></div>
+    <div class="header-with-controls">
+      <h3>CPU Load (1 min avg)</h3>
+      <div>
+          <button @click="toggleMonitoring">{{ isMonitoring ? "Turn off monitoring" : "Turn on monitoring"}}</button>
+          <button @click="toggleRenderAnimation()">{{ isRenderingFast ? "Static chart" : "Continuous chart" }}</button>
+      </div>
+    </div>
+    <div class="cpu-chart" id="cpuChart"></div>
+    <h3>Status change log</h3>
+    <ul class="status-list">
+      <li v-for="status of alertsData.statusHistory">
+        Status
+        {{ !!status.endInclusive ? 'was' : 'is' }}
+        <span class="badge" :class="{'badge__alert': status.status === 'overloaded'}">{{ status.status }}</span>
+        starting <Timestamp :time="status.startTime" />
+        {{ !!status.endInclusive ? 'until' : '' }}
+        <Timestamp v-if="!!status.endInclusive" :time="status.endInclusive" />
+      </li>
+    </ul>
   </main>
 </template>
 
@@ -24,6 +40,7 @@ const isRenderingFast = ref(false);
 const toggleRenderAnimation = () => isRenderingFast.value = !isRenderingFast.value;
 
 const {
+  alertsData,
   dataset,
   latestData,
   error,
@@ -41,11 +58,12 @@ const snapWindowToDefaultRange = () => {
   );
 }
 
+/* Alt. for static chart -> snap to default window on every new data point
 watch(latestData, () => {
   if(!isRenderingFast.value) {
     snapWindowToDefaultRange();
   }
-})
+}) */
 
 const renderContinuously = () => {
   snapWindowToDefaultRange();
@@ -65,11 +83,12 @@ onMounted(() => {
   const options: Graph2dOptions = {
     start: moment().add(-30, "seconds").toDate(),
     end: moment().toDate(),
+    height: 340,
     dataAxis: {
       left: {
         range: {
-          min: -0.08,
-          max: 1.08,
+          min: 0,
+          max: 1.5,
         },
       },
     },
@@ -85,7 +104,7 @@ onMounted(() => {
     setTimeout(() => {
       isRenderingFast.value = true;
       renderContinuously();
-    }, 12500);
+    }, 250);
   }
 })
 </script>
@@ -99,6 +118,7 @@ html, body { margin: 0; }
   --white: #fafafa;
   --fg: #dadada;
   --darkgray: #5a5a5a;
+  --red: #DB5D32;
 }
 
 body {
@@ -109,11 +129,59 @@ body {
   background-color: #353535;
 }
 
+code {
+  font-family: "Menlo", monospace;
+  font-size: 14px;
+}
+
+button {
+  display: inline-flex;
+  padding: 0.2em 0.7em;
+  line-height: 1.25;
+  font-size: 15px;
+  border-style: outset;
+  border-radius: 2.5px;
+}
+button + button {
+  margin-left: 0.5em;
+}
+
 .main {
   max-width: 920px;
   margin: 0 auto;
 }
 
+.header-with-controls {
+  display: flex;
+  align-items: center;
+}
+.header-with-controls > :first-child {
+  flex-shrink: 1;
+  margin-right: auto;
+}
+
+.cpu-chart {
+  height: 340px;
+}
+
+.status-list {
+  list-style: '→ ';
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  border-radius: 2.5px;
+  color: var(--white);
+  background-color: var(--darkgray);
+}
+
+.badge.badge__alert {
+  background-color: var(--red);
+}
 
 /* Visjs edits */
 .vis-timeline {

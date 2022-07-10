@@ -4,10 +4,13 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "test": "npx vitest run"
   },
   "devDependencies": {
-    "nuxt": "3.0.0-rc.4"
+    "nuxt": "3.0.0-rc.4",
+    "@nuxt/test-utils-edge": "^3.0.0-rc.4-27621410.b045b71",
+    "vitest": "^0.18.0"
   },
   "dependencies": {
     "vis-timeline": "^7.5.1"

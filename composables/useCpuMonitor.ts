@@ -13,7 +13,8 @@ type AlertsData = {
 
 const LOAD_THRESHOLD = 1;
 
-const computeAlertsData = (dataset, threshold): AlertsData => {
+  // Likely something like DataSet<{x: number; y: number;} | null
+export const computeAlertsData = (dataset: DataSet<any>, threshold: number): AlertsData => {
   const dataPoints = dataset.get() as {x: number, y: number}[];
   const statusHistory: StatusPeriod[] = [];
   let currentStatus = null;
@@ -21,7 +22,7 @@ const computeAlertsData = (dataset, threshold): AlertsData => {
   let triggeredStatus: null | LoadStatus = null;
 
   dataPoints.forEach((point) => {
-    const status = point > threshold ? "overloaded" : "ok";
+    const status = point.y > threshold ? "overloaded" : "ok";
     triggeredStatus = null;
 
     if (status !== currentStatus) {
@@ -34,6 +35,7 @@ const computeAlertsData = (dataset, threshold): AlertsData => {
         startTime: point.x,
         endInclusive: null,
       })
+      currentStatus = status;
       triggeredStatus = status;
     }
 
@@ -41,7 +43,7 @@ const computeAlertsData = (dataset, threshold): AlertsData => {
   })
 
   return {
-    statusHistory: [],
+    statusHistory,
     triggeredStatus,
   }
 }
@@ -66,13 +68,14 @@ export const useCpuMonitor = async (interval = 10000) => {
   // Runs whenever a new data point arrives
   watch(cpuData, (newData) => {
     dataset.add({
+      id: newData.timestamp,
       x: newData.timestamp,
       y: newData.load,
       group: 1
     } as any)
 
     const idsToRemove = dataset.getIds({
-      filter: (item: any) => moment().subtract(10, 'minutes').isBefore(item.x)
+      filter: (item: any) => moment().subtract(10, 'minutes').isAfter(item.x)
     });
     dataset.remove(idsToRemove);
 
@@ -80,6 +83,7 @@ export const useCpuMonitor = async (interval = 10000) => {
   })
 
   return {
+    alertsData,
     dataset,
     latestData: cpuData,
     error: error,
