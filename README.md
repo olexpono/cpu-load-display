@@ -1,5 +1,8 @@
 # Nuxt3 CPU Load display
 
+<img width="1006" alt="Screen Shot 2022-07-10 at 12 11 28 PM" src="https://user-images.githubusercontent.com/88747/178152881-512af0aa-6bde-44a1-a370-eeca0798c475.png">
+
+
 To productionize:
 
 - Linter setup, clean up commented out features etc
